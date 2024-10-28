@@ -1,0 +1,175 @@
+.pdf-viewer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.controls {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 100;
+  padding: 10px;
+}
+
+.canvas-container {
+  border: 1px solid #ccc;
+  overflow: hidden;
+  max-height: 80vh;
+  max-width: 100%;
+  position: relative;
+  user-select: none;
+  cursor: grab;
+}
+
+.canvas-container.setting-scale {
+  cursor: crosshair !important;
+}
+
+.canvas-container:active {
+  cursor: grabbing;
+}
+
+.canvas-container.setting-scale:active {
+  cursor: crosshair !important;
+}
+
+.canvas-container canvas {
+  cursor: inherit;
+}
+
+canvas {
+  display: block;
+}
+
+button {
+  padding: 8px 16px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.loading {
+  padding: 20px;
+  color: #666;
+  font-style: italic;
+}
+
+.error {
+  padding: 10px;
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.scale-settings {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scale-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.scale-input input {
+  width: 100px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.scale-instructions {
+  color: #666;
+  margin: 0;
+  font-style: italic;
+}
+
+.scale-info {
+  background-color: #e9ecef;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.measurement-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.measurement-tools button.active {
+  background-color: #28a745;
+}
+
+.measurements-list {
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 4px;
+  min-width: 200px;
+}
+
+.measurement-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.delete-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #c82333;
+}
+
+.page-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.page-controls span {
+  min-width: 100px;
+  text-align: center;
+}
+
+.page-controls button {
+  padding: 5px 10px;
+}
+
+.page-controls button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
