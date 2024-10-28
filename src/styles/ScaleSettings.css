@@ -1,0 +1,169 @@
+.scale-settings {
+  padding: 1rem;
+  border-radius: 8px;
+  background: #f8f9fa;
+  margin: 1rem 0;
+}
+
+.scale-start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: #007bff;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.scale-start-btn:hover {
+  background: #0056b3;
+}
+
+.scale-start-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.scale-setup-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.scale-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.scale-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  position: relative;
+}
+
+.scale-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  right: -50%;
+  width: 100%;
+  height: 2px;
+  background: #dee2e6;
+  z-index: 0;
+}
+
+.step-number {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #dee2e6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #6c757d;
+  position: relative;
+  z-index: 1;
+}
+
+.step-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+  text-align: center;
+}
+
+.scale-step.active .step-number {
+  background: #007bff;
+  color: white;
+}
+
+.scale-step.complete .step-number {
+  background: #28a745;
+  color: white;
+}
+
+.scale-step.complete::after {
+  background: #28a745;
+}
+
+.distance-input-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.distance-input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.unit-select {
+  padding: 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: white;
+  min-width: 80px;
+}
+
+.scale-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.confirm-btn,
+.cancel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.confirm-btn {
+  background: #28a745;
+  color: white;
+  flex: 1;
+}
+
+.confirm-btn:hover {
+  background: #218838;
+}
+
+.confirm-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: #c82333;
+}
+
+.scale-input-container {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+} 
