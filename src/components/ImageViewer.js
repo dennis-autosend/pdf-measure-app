@@ -59,306 +59,246 @@ const ImageViewer = () => {
     }
   };
 
+  // Add this new helper function to get transformed coordinates
+  const getTransformedCoordinates = (e) => {
+    const rect = canvasRef.current.getBoundingClientRect();
+    
+    // Get click position relative to canvas
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    // Transform coordinates based on current pan and scale
+    const transformedX = (clickX - panPosition.x) / scale;
+    const transformedY = (clickY - panPosition.y) / scale;
+
+    return { x: transformedX, y: transformedY };
+  };
+
   // Draw image and measurements
   const drawCanvas = useCallback(() => {
-    console.log('Drawing canvas');
-    console.log('Current scale points:', scalePoints);
-    
-    if (!canvasRef.current || !image) {
-      console.log('Missing canvas or image:', {
-        hasCanvas: !!canvasRef.current,
-        hasImage: !!image
-      });
-      return;
-    }
+    if (!canvasRef.current || !image) return;
 
-    try {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
 
-      // Set canvas size to match image
-      canvas.width = image.width;
-      canvas.height = image.height;
+    // Set canvas size to match image
+    canvas.width = image.width;
+    canvas.height = image.height;
 
-      console.log('Canvas dimensions:', {
-        width: canvas.width,
-        height: canvas.height
-      });
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Clear canvas
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Save the current context state
+    ctx.save();
 
-      // Draw image
-      ctx.drawImage(image, 0, 0);
+    // Apply transformations
+    ctx.translate(panPosition.x, panPosition.y);
+    ctx.scale(scale, scale);
 
-      // Draw scale points with error checking
-      if (scalePoints.start) {
-        console.log('Drawing start point');
-        ctx.beginPath();
-        ctx.arc(scalePoints.start.x, scalePoints.start.y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = 'red';
-        ctx.fill();
-      }
+    // Draw image
+    ctx.drawImage(image, 0, 0);
 
-      if (scalePoints.end) {
-        console.log('Drawing end point');
-        ctx.beginPath();
-        ctx.arc(scalePoints.end.x, scalePoints.end.y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = 'red';
-        ctx.fill();
+    // Draw scale points and dynamic line
+    if (scalePoints.start) {
+      // Draw first point
+      ctx.beginPath();
+      ctx.arc(scalePoints.start.x, scalePoints.start.y, 5/scale, 0, 2 * Math.PI);
+      ctx.fillStyle = 'red';
+      ctx.fill();
 
-        // Draw thick orange line between points
+      // Draw dynamic line while setting scale
+      if (!scalePoints.end && dynamicLineEnd) {
         ctx.beginPath();
         ctx.moveTo(scalePoints.start.x, scalePoints.start.y);
-        ctx.lineTo(scalePoints.end.x, scalePoints.end.y);
+        ctx.lineTo(dynamicLineEnd.x, dynamicLineEnd.y);
         ctx.strokeStyle = 'orange';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 3/scale;
         ctx.stroke();
       }
+    }
 
-      // Draw measurements with technical labels
-      measurements.forEach(measurement => {
-        if (measurement.type === 'distance') {
-          // Draw the measurement line
-          ctx.beginPath();
-          ctx.moveTo(measurement.points[0].x, measurement.points[0].y);
-          ctx.lineTo(measurement.points[1].x, measurement.points[1].y);
-          ctx.strokeStyle = 'blue';
-          ctx.lineWidth = 2;
-          ctx.stroke();
+    // Draw final scale line if both points are set
+    if (scalePoints.end) {
+      ctx.beginPath();
+      ctx.arc(scalePoints.end.x, scalePoints.end.y, 5/scale, 0, 2 * Math.PI);
+      ctx.fillStyle = 'red';
+      ctx.fill();
 
-          // Draw dots at start and end points
-          [measurement.points[0], measurement.points[1]].forEach(point => {
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI);
-            ctx.fillStyle = 'blue';
-            ctx.fill();
-          });
+      ctx.beginPath();
+      ctx.moveTo(scalePoints.start.x, scalePoints.start.y);
+      ctx.lineTo(scalePoints.end.x, scalePoints.end.y);
+      ctx.strokeStyle = 'orange';
+      ctx.lineWidth = 3/scale;
+      ctx.stroke();
+    }
 
-          // Calculate midpoint and angle
-          const midX = (measurement.points[0].x + measurement.points[1].x) / 2;
-          const midY = (measurement.points[0].y + measurement.points[1].y) / 2;
-          const angle = Math.atan2(
-            measurement.points[1].y - measurement.points[0].y,
-            measurement.points[1].x - measurement.points[0].x
-          );
+    // Draw measurements
+    measurements.forEach(measurement => {
+      if (measurement.type === 'distance') {
+        // Draw the line
+        ctx.beginPath();
+        ctx.moveTo(measurement.points[0].x, measurement.points[0].y);
+        ctx.lineTo(measurement.points[1].x, measurement.points[1].y);
+        ctx.strokeStyle = 'blue';
+        ctx.lineWidth = 2/scale;
+        ctx.stroke();
 
-          // Determine which side to place the label based on line angle
-          const leaderLength = 40;
-          // If line is more horizontal, place label above or below
-          // If line is more vertical, place label left or right
-          const isMoreHorizontal = Math.abs(Math.cos(angle)) > Math.abs(Math.sin(angle));
-          const leaderAngle = isMoreHorizontal ? 
-            (midY > canvas.height/2 ? Math.PI * 3/2 : Math.PI/2) : // above or below
-            (midX > canvas.width/2 ? Math.PI : 0); // left or right
+        // Calculate midpoint for label position
+        const midX = (measurement.points[0].x + measurement.points[1].x) / 2;
+        const midY = (measurement.points[0].y + measurement.points[1].y) / 2;
 
-          // Calculate leader line end point
-          const leaderX = midX + Math.cos(leaderAngle) * leaderLength;
-          const leaderY = midY + Math.sin(leaderAngle) * leaderLength;
+        // Draw label background
+        const label = measurement.label || `Distance ${measurements.indexOf(measurement) + 1}`;
+        const value = `${measurement.value.toFixed(2)} ft`;
+        ctx.font = `${14/scale}px Arial`;
+        const labelWidth = ctx.measureText(label).width;
+        const valueWidth = ctx.measureText(value).width;
+        const width = Math.max(labelWidth, valueWidth) + 20/scale;
+        const height = 40/scale;
 
-          // Draw leader line
-          ctx.beginPath();
-          ctx.moveTo(midX, midY);
-          ctx.lineTo(leaderX, leaderY);
-          ctx.strokeStyle = 'blue';
-          ctx.lineWidth = 1;
-          ctx.stroke();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillRect(midX - width/2, midY - height - 10/scale, width, height);
 
-          // Prepare text
-          const labelText = measurement.label || '';
-          const measurementText = `${measurement.value.toFixed(2)} ft`;
-          ctx.font = '14px Arial';
-          
-          // Calculate text dimensions
-          const labelWidth = ctx.measureText(labelText).width;
-          const measurementWidth = ctx.measureText(measurementText).width;
-          const maxWidth = Math.max(labelWidth, measurementWidth);
-          const padding = 6;
-          const labelHeight = labelText ? 40 : 24;
+        // Draw label text
+        ctx.fillStyle = 'blue';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, midX, midY - height/2 - 5/scale);
+        ctx.fillText(value, midX, midY - 10/scale);
+      }
+    });
 
-          // Position the background box based on leader line angle
-          let boxX, boxY;
-          
-          if (isMoreHorizontal) {
-            // For horizontal lines
-            boxX = leaderX - maxWidth/2;
-            boxY = midY > canvas.height/2 ? 
-              leaderY - labelHeight - padding : // place above
-              leaderY + padding; // place below
-          } else {
-            // For vertical lines
-            boxX = midX > canvas.width/2 ? 
-              leaderX - maxWidth - padding : // place to the left
-              leaderX + padding; // place to the right
-            boxY = leaderY - labelHeight/2;
-          }
+    // Draw current measurement
+    if (currentPoints.length > 0 && dynamicLineEnd && measurementMode === 'distance') {
+      ctx.beginPath();
+      ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
+      ctx.lineTo(dynamicLineEnd.x, dynamicLineEnd.y);
+      ctx.strokeStyle = 'blue';
+      ctx.lineWidth = 2/scale;
+      ctx.stroke();
 
-          // Draw background
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-          ctx.beginPath();
-          ctx.roundRect(
-            boxX,
-            boxY,
-            maxWidth + padding * 2,
-            labelHeight + padding * 2,
-            4
-          );
-          ctx.fill();
+      if (scaleFactor) {
+        const distance = Math.sqrt(
+          Math.pow(dynamicLineEnd.x - currentPoints[0].x, 2) +
+          Math.pow(dynamicLineEnd.y - currentPoints[0].y, 2)
+        ) * scaleFactor;
 
-          // Draw text
-          ctx.fillStyle = 'blue';
-          ctx.textAlign = 'left';
-          ctx.textBaseline = 'middle';
-          
-          if (labelText) {
-            ctx.fillText(labelText, boxX + padding, boxY + labelHeight/2 - 8);
-          }
-          ctx.fillText(measurementText, boxX + padding, boxY + labelHeight/2 + 8);
-        } else if (measurement.type === 'area') {
-          // Draw the measurement line
-          ctx.beginPath();
-          ctx.moveTo(measurement.points[0].x, measurement.points[0].y);
-          measurement.points.forEach(point => {
-            ctx.lineTo(point.x, point.y);
-          });
-          if (measurement.type === 'area') {
-            ctx.closePath();
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.1)';
-            ctx.fill();
-          }
-          ctx.strokeStyle = measurement.type === 'distance' ? 'blue' : 'green';
-          ctx.lineWidth = 2;
-          ctx.stroke();
+        ctx.font = `${14/scale}px Arial`;
+        ctx.fillStyle = 'blue';
+        ctx.fillText(
+          `${distance.toFixed(2)} ft`,
+          dynamicLineEnd.x + 10/scale,
+          dynamicLineEnd.y - 10/scale
+        );
+      }
+    }
 
-          // Draw current area measurement
-          if (scaleFactor && currentPoints.length > 2) {
-            const area = calculatePolygonArea([...currentPoints, dynamicLineEnd]);
-            const realArea = area * scaleFactor * scaleFactor;
-
-            ctx.font = '16px Arial';
-            ctx.fillStyle = 'green';
-            ctx.fillText(`${realArea.toFixed(2)} sq ft`, dynamicLineEnd.x + 10, dynamicLineEnd.y - 10);
-          }
+    // Draw area measurement in progress
+    if (measurementMode === 'area' && currentPoints.length > 0) {
+      // Draw lines between existing points
+      ctx.beginPath();
+      ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
+      currentPoints.forEach((point, index) => {
+        if (index > 0) {
+          ctx.lineTo(point.x, point.y);
         }
       });
 
-      // Draw current measurement points
-      if (currentPoints.length > 0) {
-        ctx.beginPath();
-        ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
-        currentPoints.forEach(point => {
-          ctx.lineTo(point.x, point.y);
-        });
-        ctx.strokeStyle = measurementMode === 'distance' ? 'blue' : 'green';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-
-      // Draw current distance measurement
-      if (measurementMode === 'distance' && currentPoints.length > 0) {
-        ctx.beginPath();
-        ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
-
-        if (currentPoints.length === 1) {
-          // If only one point, draw dynamic line to cursor
-          ctx.lineTo(dynamicLineEnd.x, dynamicLineEnd.y);
-        } else {
-          // If both points set, draw line between them
-          ctx.lineTo(currentPoints[1].x, currentPoints[1].y);
-        }
-
-        ctx.strokeStyle = 'blue';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Draw the current distance if scale is set
-        if (scaleFactor && currentPoints.length === 1) {
-          const pixelDistance = Math.sqrt(
-            Math.pow(dynamicLineEnd.x - currentPoints[0].x, 2) +
-            Math.pow(dynamicLineEnd.y - currentPoints[0].y, 2)
-          );
-          const realDistance = pixelDistance * scaleFactor;
-
-          ctx.font = '16px Arial';
-          ctx.fillStyle = 'blue';
-          ctx.fillText(`${realDistance.toFixed(2)} ft`, dynamicLineEnd.x + 10, dynamicLineEnd.y - 10);
+      // Draw dynamic line to current mouse position
+      if (dynamicLineEnd) {
+        ctx.lineTo(dynamicLineEnd.x, dynamicLineEnd.y);
+        
+        // If we have more than 2 points, show potential closing line
+        if (currentPoints.length > 2) {
+          ctx.lineTo(currentPoints[0].x, currentPoints[0].y);
         }
       }
 
-      // Draw current area measurement
-      if (measurementMode === 'area' && currentPoints.length > 0) {
+      ctx.strokeStyle = 'green';
+      ctx.lineWidth = 2/scale;
+      ctx.stroke();
+
+      // Draw vertices for existing points
+      currentPoints.forEach(point => {
         ctx.beginPath();
-        ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
-        currentPoints.forEach((point, index) => {
+        ctx.arc(point.x, point.y, 5/scale, 0, 2 * Math.PI);
+        ctx.fillStyle = 'green';
+        ctx.fill();
+      });
+
+      // Draw temporary area calculation if we have more than 2 points
+      if (currentPoints.length > 2 && dynamicLineEnd) {
+        const tempPoints = [...currentPoints, dynamicLineEnd];
+        const area = calculatePolygonArea(tempPoints);
+        const realArea = area * scaleFactor * scaleFactor;
+
+        // Position the area text near the last point
+        const lastPoint = currentPoints[currentPoints.length - 1];
+        ctx.font = `${14/scale}px Arial`;
+        ctx.fillStyle = 'green';
+        ctx.fillText(
+          `${realArea.toFixed(2)} sq ft`,
+          lastPoint.x + 10/scale,
+          lastPoint.y - 10/scale
+        );
+      }
+    }
+
+    // Draw completed area measurements
+    measurements.forEach(measurement => {
+      if (measurement.type === 'area') {
+        // Draw the polygon
+        ctx.beginPath();
+        ctx.moveTo(measurement.points[0].x, measurement.points[0].y);
+        measurement.points.forEach((point, index) => {
           if (index > 0) {
             ctx.lineTo(point.x, point.y);
           }
         });
-
-        if (currentPoints.length > 2) {
-          ctx.closePath();
-        } else {
-          ctx.lineTo(dynamicLineEnd.x, dynamicLineEnd.y);
-        }
-
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+        ctx.fill();
         ctx.strokeStyle = 'green';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2/scale;
         ctx.stroke();
 
-        // Draw the current area if scale is set and polygon is closed
-        if (scaleFactor && currentPoints.length > 2) {
-          const area = calculatePolygonArea([...currentPoints, dynamicLineEnd]);
-          const realArea = area * scaleFactor * scaleFactor;
+        // Calculate centroid for label position
+        const centroid = getCentroid(measurement.points);
 
-          ctx.font = '16px Arial';
-          ctx.fillStyle = 'green';
-          ctx.fillText(`${realArea.toFixed(2)} sq ft`, dynamicLineEnd.x + 10, dynamicLineEnd.y - 10);
-        }
+        // Draw label background
+        const label = measurement.label || `Area ${measurements.indexOf(measurement) + 1}`;
+        const value = `${measurement.value.toFixed(2)} sq ft`;
+        ctx.font = `${14/scale}px Arial`;
+        const labelWidth = ctx.measureText(label).width;
+        const valueWidth = ctx.measureText(value).width;
+        const width = Math.max(labelWidth, valueWidth) + 20/scale;
+        const height = 40/scale;
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillRect(centroid.x - width/2, centroid.y - height/2, width, height);
+
+        // Draw label text
+        ctx.fillStyle = 'green';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, centroid.x, centroid.y - 5/scale);
+        ctx.fillText(value, centroid.x, centroid.y + 15/scale);
       }
+    });
 
-      if (isDynamicLine && scalePoints.start && dynamicLineEnd) {
-        console.log('Drawing dynamic line:', {
-          startX: scalePoints.start.x,
-          startY: scalePoints.start.y,
-          endX: dynamicLineEnd.x,
-          endY: dynamicLineEnd.y
-        });
+    // Restore the context state
+    ctx.restore();
+  }, [image, scale, panPosition, scalePoints, measurements, currentPoints, dynamicLineEnd, measurementMode, scaleFactor]);
 
-        ctx.beginPath();
-        ctx.moveTo(scalePoints.start.x, scalePoints.start.y);
-        ctx.lineTo(dynamicLineEnd.x, dynamicLineEnd.y);
-        ctx.strokeStyle = 'orange';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-      }
-
-      // Draw dynamic measurement line
-      if (isDrawing && measurementMode === 'distance' && currentPoints.length === 1 && dynamicLineEnd) {
-        ctx.beginPath();
-        ctx.moveTo(currentPoints[0].x, currentPoints[0].y);
-        ctx.lineTo(dynamicLineEnd.x, dynamicLineEnd.y);
-        ctx.strokeStyle = 'blue';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Draw measurement label
-        if (scaleFactor) {
-          const pixelDistance = Math.sqrt(
-            Math.pow(dynamicLineEnd.x - currentPoints[0].x, 2) +
-            Math.pow(dynamicLineEnd.y - currentPoints[0].y, 2)
-          );
-          const realDistance = pixelDistance * scaleFactor;
-
-          ctx.font = '16px Arial';
-          ctx.fillStyle = 'blue';
-          ctx.fillText(`${realDistance.toFixed(2)} ft`, dynamicLineEnd.x + 10, dynamicLineEnd.y - 10);
-        }
-      }
-    } catch (error) {
-      console.error('Error in drawCanvas:', error);
-      setError(`Error drawing canvas: ${error.message}`);
-    }
-  }, [image, scalePoints, measurements, currentPoints, measurementMode, isDynamicLine, dynamicLineEnd, scaleFactor, isDrawing]);
+  // Add helper function to calculate centroid
+  const getCentroid = (points) => {
+    const centroid = points.reduce(
+      (acc, point) => ({
+        x: acc.x + point.x / points.length,
+        y: acc.y + point.y / points.length
+      }),
+      { x: 0, y: 0 }
+    );
+    return centroid;
+  };
 
   // Handle zoom
   const handleZoom = (zoomType) => {
@@ -387,28 +327,19 @@ const ImageViewer = () => {
       });
     }
 
-    // Handle dynamic line for measurements
-    if (isDrawing && measurementMode === 'distance') {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const rawX = e.clientX - rect.left;
-      const rawY = e.clientY - rect.top;
-      const x = (rawX - panPosition.x) / scale;
-      const y = (rawY - panPosition.y) / scale;
-
-      setDynamicLineEnd({ x, y });
-      drawCanvas();
-    }
-
-    // Keep existing scale setting dynamic line
-    if (isDynamicLine) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const rawX = e.clientX - rect.left;
-      const rawY = e.clientY - rect.top;
-      const x = (rawX - panPosition.x) / scale;
-      const y = (rawY - panPosition.y) / scale;
-
+    // Handle dynamic line for scale setting
+    if (isSettingScale && scalePoints.start && !scalePoints.end) {
+      const { x, y } = getTransformedCoordinates(e);
       setDynamicLineEnd({ x, y });
     }
+
+    // Handle dynamic line for measurements (both distance and area)
+    if (isDrawing && (measurementMode === 'distance' || measurementMode === 'area')) {
+      const { x, y } = getTransformedCoordinates(e);
+      setDynamicLineEnd({ x, y });
+    }
+
+    drawCanvas();
   };
 
   const handleMouseUp = () => {
@@ -417,59 +348,21 @@ const ImageViewer = () => {
 
   // Update handleCanvasClick to handleCanvasDoubleClick
   const handleCanvasDoubleClick = (e) => {
-    console.log('Double click detected');
-    console.log('isSettingScale:', isSettingScale);
-    console.log('canSetScale:', canSetScale);
-    
-    if (!isSettingScale || !canSetScale) {
-      console.log('Not in scale setting mode or cannot set scale yet');
-      return;
-    }
-
-    if (!image) {
-      setError('Please upload an image first');
+    if (!isSettingScale || !canSetScale || !image) {
       return;
     }
 
     try {
       e.preventDefault();
-      const rect = canvasRef.current.getBoundingClientRect();
-      const rawX = e.clientX - rect.left;
-      const rawY = e.clientY - rect.top;
-      const x = (rawX - panPosition.x) / scale;
-      const y = (rawY - panPosition.y) / scale;
-
-      console.log('Click coordinates:', {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        rectLeft: rect.left,
-        rectTop: rect.top,
-        panX: panPosition.x,
-        panY: panPosition.y,
-        scale: scale,
-        calculatedX: x,
-        calculatedY: y
-      });
+      const { x, y } = getTransformedCoordinates(e);
 
       if (!scalePoints.start) {
-        console.log('Setting first point:', { x, y });
         setScalePoints({ start: { x, y }, end: null });
-        setIsDynamicLine(true); // Start the dynamic line
-        setDebugInfo({
-          lastAction: 'Set first point',
-          clickCoordinates: { x, y },
-          scaleStatus: 'First point set'
-        });
+        setIsDynamicLine(true);
       } else if (!scalePoints.end) {
-        console.log('Setting second point:', { x, y });
         setScalePoints({ ...scalePoints, end: { x, y } });
-        setIsDynamicLine(false); // End the dynamic line
-        setDynamicLineEnd(null); // Reset the dynamic line end
-        setDebugInfo({
-          lastAction: 'Set second point',
-          clickCoordinates: { x, y },
-          scaleStatus: 'Both points set'
-        });
+        setIsDynamicLine(false);
+        setDynamicLineEnd(null);
       }
 
       drawCanvas();
@@ -481,37 +374,20 @@ const ImageViewer = () => {
 
   // Add click handler for measurements
   const handleCanvasClick = (e) => {
-    console.log('Canvas clicked');
-    console.log('Current measurement mode:', measurementMode);
-    console.log('Is drawing:', isDrawing);
+    if (!measurementMode) return;
 
-    if (measurementMode) {
-      try {
-        e.preventDefault();
-        const rect = canvasRef.current.getBoundingClientRect();
-        const rawX = e.clientX - rect.left;
-        const rawY = e.clientY - rect.top;
-        const x = (rawX - panPosition.x) / scale;
-        const y = (rawY - panPosition.y) / scale;
+    try {
+      e.preventDefault();
+      const { x, y } = getTransformedCoordinates(e);
 
-        console.log('Click coordinates:', {
-          raw: { x: rawX, y: rawY },
-          adjusted: { x, y },
-          scale,
-          panPosition
-        });
-
-        if (measurementMode === 'distance') {
-          console.log('Handling distance measurement');
-          handleDistanceMeasurement(x, y);
-        } else if (measurementMode === 'area') {
-          console.log('Handling area measurement');
-          handleAreaMeasurement(x, y);
-        }
-      } catch (error) {
-        console.error('Error in handleCanvasClick:', error);
-        setError(`Error measuring: ${error.message}`);
+      if (measurementMode === 'distance') {
+        handleDistanceMeasurement(x, y);
+      } else if (measurementMode === 'area') {
+        handleAreaMeasurement(x, y);
       }
+    } catch (error) {
+      console.error('Error in handleCanvasClick:', error);
+      setError(`Error measuring: ${error.message}`);
     }
   };
 
@@ -558,14 +434,16 @@ const ImageViewer = () => {
     }
   };
 
-  // Add handleAreaMeasurement function
+  // Update handleAreaMeasurement to include better visual feedback
   const handleAreaMeasurement = (x, y) => {
     if (!isDrawing) {
       setIsDrawing(true);
       setCurrentPoints([{ x, y }]);
+      setDynamicLineEnd({ x, y }); // Initialize dynamic line end
     } else {
       const newPoints = [...currentPoints, { x, y }];
       setCurrentPoints(newPoints);
+      setDynamicLineEnd({ x, y });
       
       if (newPoints.length >= 3) {
         // Check if click is near starting point to close polygon
@@ -586,6 +464,7 @@ const ImageViewer = () => {
           
           setIsDrawing(false);
           setCurrentPoints([]);
+          setDynamicLineEnd(null);
         }
       }
     }
