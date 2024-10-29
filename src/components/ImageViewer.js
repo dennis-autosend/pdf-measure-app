@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ScaleSettings from './ScaleSettings';
 import MeasurementTools from './MeasurementTools';
-import { FaRulerHorizontal, FaDrawPolygon, FaTrash, FaCloudUploadAlt, FaSearchPlus, FaSearchMinus } from 'react-icons/fa';
+import { FaCloudUploadAlt, FaSearchPlus, FaSearchMinus } from 'react-icons/fa';
 
 const ImageViewer = () => {
   const [image, setImage] = useState(null);
@@ -18,18 +18,7 @@ const ImageViewer = () => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentPoints, setCurrentPoints] = useState([]);
   const [measurements, setMeasurements] = useState([]);
-
-  // Add debug state
-  const [debugInfo, setDebugInfo] = useState({
-    lastAction: null,
-    clickCoordinates: null,
-    scaleStatus: null
-  });
-
-  // Add new state for tracking if we can set scale
   const [canSetScale, setCanSetScale] = useState(false);
-
-  // Add new state for tracking the dynamic line
   const [isDynamicLine, setIsDynamicLine] = useState(false);
   const [dynamicLineEnd, setDynamicLineEnd] = useState(null);
 

@@ -14,7 +14,6 @@ function MeasurementTools({
   const [areaPoints, setAreaPoints] = useState([]);
   const [areaLabels, setAreaLabels] = useState([]);
   const [isDrawingArea, setIsDrawingArea] = useState(false);
-  const [activeLabel, setActiveLabel] = useState('');
 
   const handleLabelChange = (index, newLabel) => {
     const newMeasurements = [...measurements];
@@ -29,31 +28,6 @@ function MeasurementTools({
     const newLabels = [...areaLabels];
     newLabels[index] = e.target.value;
     setAreaLabels(newLabels);
-  };
-
-  const handleAreaMeasurement = (e) => {
-    if (!isDrawingArea) return;
-    
-    const viewer = pdfViewerRef.current;
-    if (!viewer) return;
-
-    const rect = viewer.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / scale;
-    const y = (e.clientY - rect.top) / scale;
-
-    setAreaPoints(prev => [...prev, { x, y }]);
-  };
-
-  const completeAreaMeasurement = () => {
-    if (areaPoints.length < 3) {
-      setAreaPoints([]);
-      return;
-    }
-
-    // Create a new label for this area
-    setAreaLabels(prev => [...prev, '']);
-    setActiveLabel(areaLabels.length);
-    setIsDrawingArea(false);
   };
 
   return (
