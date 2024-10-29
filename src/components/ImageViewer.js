@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ScaleSettings from './ScaleSettings';
 import MeasurementTools from './MeasurementTools';
-import { FaCloudUploadAlt, FaSearchPlus, FaSearchMinus } from 'react-icons/fa';
+import { FaCloudUploadAlt } from 'react-icons/fa';
 
 const ImageViewer = () => {
   const [image, setImage] = useState(null);
@@ -300,14 +300,6 @@ const ImageViewer = () => {
     return centroid;
   };
 
-  // Handle zoom
-  const handleZoom = (zoomType) => {
-    const newScale = zoomType === 'in' ? scale + 0.1 : scale - 0.1;
-    if (newScale > 0.1) {
-      setScale(newScale);
-    }
-  };
-
   // Pan handlers
   const handleMouseDown = (e) => {
     if (!isSettingScale) {
@@ -523,14 +515,6 @@ const ImageViewer = () => {
               accept="image/*" 
               onChange={handleFileUpload} 
             />
-          </div>
-          <div className="zoom-controls">
-            <button onClick={() => handleZoom('in')} disabled={!image}>
-              <FaSearchPlus />
-            </button>
-            <button onClick={() => handleZoom('out')} disabled={!image}>
-              <FaSearchMinus />
-            </button>
           </div>
           <ScaleSettings 
             onScaleSet={handleScaleSet}
