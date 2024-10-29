@@ -327,26 +327,19 @@ const ImageViewer = () => {
       });
     }
 
-    // Handle dynamic line for scale setting
-    if (isSettingScale && scalePoints.start && !scalePoints.end) {
+    // Update dynamic line for measurements and scale setting
+    if ((isDrawing && measurementMode === 'distance') || isDynamicLine) {
       const { x, y } = getTransformedCoordinates(e);
       setDynamicLineEnd({ x, y });
+      drawCanvas();
     }
-
-    // Handle dynamic line for measurements (both distance and area)
-    if (isDrawing && (measurementMode === 'distance' || measurementMode === 'area')) {
-      const { x, y } = getTransformedCoordinates(e);
-      setDynamicLineEnd({ x, y });
-    }
-
-    drawCanvas();
   };
 
   const handleMouseUp = () => {
     setIsPanning(false);
   };
 
-  // Update handleCanvasClick to handleCanvasDoubleClick
+  // Update handleCanvasDoubleClick for scale setting
   const handleCanvasDoubleClick = (e) => {
     if (!isSettingScale || !canSetScale || !image) {
       return;
@@ -372,7 +365,7 @@ const ImageViewer = () => {
     }
   };
 
-  // Add click handler for measurements
+  // Update handleCanvasClick for measurements
   const handleCanvasClick = (e) => {
     if (!measurementMode) return;
 
@@ -569,7 +562,7 @@ const ImageViewer = () => {
             ref={containerRef}
             className={`canvas-container ${isSettingScale ? 'setting-scale' : ''}`}
             onMouseDown={!isSettingScale ? handleMouseDown : undefined}
-            onMouseMove={handleMouseMove} // Add the onMouseMove handler
+            onMouseMove={handleMouseMove}
             onMouseUp={!isSettingScale ? handleMouseUp : undefined}
             onMouseLeave={!isSettingScale ? handleMouseUp : undefined}
             onDoubleClick={handleCanvasDoubleClick}
