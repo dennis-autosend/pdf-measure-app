@@ -59,6 +59,7 @@
 
 .measurement-content {
 <<<<<<< HEAD
+<<<<<<< HEAD
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto 24px;
 =======
@@ -84,6 +85,15 @@
 .measurement-label:focus {
   outline: 1px solid #007bff;
 =======
+.label-input {
+  border: 1px solid #ccc;
+>>>>>>> parent of 2557c27 (working measurement tool with updated css)
+=======
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .label-input {
   border: 1px solid #ccc;
 >>>>>>> parent of 2557c27 (working measurement tool with updated css)

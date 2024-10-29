@@ -388,6 +388,7 @@ const ImageViewer = () => {
     }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     // Update dynamic line for measurements and scale setting
     if ((isDrawing && measurementMode === 'distance') || isDynamicLine) {
       const { x, y } = getTransformedCoordinates(e);
@@ -405,6 +406,18 @@ const ImageViewer = () => {
 
       setDynamicLineEnd({ x, y });
       drawCanvas();
+=======
+    // Handle dynamic line for measurements
+    if (isDrawing && measurementMode === 'distance') {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const rawX = e.clientX - rect.left;
+      const rawY = e.clientY - rect.top;
+      const x = (rawX - panPosition.x) / scale;
+      const y = (rawY - panPosition.y) / scale;
+
+      setDynamicLineEnd({ x, y });
+      drawCanvas();
+>>>>>>> parent of 2557c27 (working measurement tool with updated css)
     }
 
     // Keep existing scale setting dynamic line
@@ -417,6 +430,9 @@ const ImageViewer = () => {
 
       setDynamicLineEnd({ x, y });
     }
+<<<<<<< HEAD
+>>>>>>> parent of 2557c27 (working measurement tool with updated css)
+=======
 >>>>>>> parent of 2557c27 (working measurement tool with updated css)
   };
 
