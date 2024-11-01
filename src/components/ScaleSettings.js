@@ -41,6 +41,15 @@ const ScaleSettings = ({
     if (step === 3) return knownDistance ? 'complete' : (scalePoints.end ? 'active' : 'pending');
   };
 
+  const getInstructionMessage = () => {
+    if (!scalePoints.start) {
+      return "Double-click to set the first point";
+    } else if (!scalePoints.end) {
+      return "Double-click to set the second point";
+    }
+    return "Enter the known distance between the points";
+  };
+
   return (
     <div className="scale-settings">
       {!isSettingScale ? (
@@ -54,6 +63,10 @@ const ScaleSettings = ({
         </button>
       ) : (
         <div className="scale-setup-container">
+          <div className="scale-instruction">
+            <span className="instruction-text">{getInstructionMessage()}</span>
+          </div>
+
           <div className="scale-steps">
             <div className={`scale-step ${getStepStatus(1)}`}>
               <div className="step-number">1</div>

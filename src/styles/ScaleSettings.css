@@ -166,4 +166,41 @@
   padding: 1rem;
   border-radius: 6px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.scale-instruction {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  text-align: center;
+  border: 1px solid #e9ecef;
+}
+
+.instruction-text {
+  color: #495057;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.instruction-text::before {
+  content: "💡";
+}
+
+.scale-instruction {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 } 

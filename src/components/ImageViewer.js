@@ -139,7 +139,7 @@ const ImageViewer = () => {
         ctx.beginPath();
         ctx.moveTo(measurement.points[0].x, measurement.points[0].y);
         ctx.lineTo(measurement.points[1].x, measurement.points[1].y);
-        ctx.strokeStyle = 'blue';
+        ctx.strokeStyle = '#2196F3'; // Modern blue color
         ctx.lineWidth = 2/scale;
         ctx.stroke();
 
@@ -147,23 +147,51 @@ const ImageViewer = () => {
         const midX = (measurement.points[0].x + measurement.points[1].x) / 2;
         const midY = (measurement.points[0].y + measurement.points[1].y) / 2;
 
-        // Draw label background
+        // Draw label background with modern styling
         const label = measurement.label || `Distance ${measurements.indexOf(measurement) + 1}`;
         const value = `${measurement.value.toFixed(2)} ft`;
         ctx.font = `${14/scale}px Arial`;
         const labelWidth = ctx.measureText(label).width;
         const valueWidth = ctx.measureText(value).width;
-        const width = Math.max(labelWidth, valueWidth) + 20/scale;
-        const height = 40/scale;
+        const width = Math.max(labelWidth, valueWidth) + 24/scale;
+        const height = 52/scale;
+        const boxY = midY - height - 10/scale;
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        ctx.fillRect(midX - width/2, midY - height - 10/scale, width, height);
+        // Draw background with shadow
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+        ctx.shadowBlur = 8/scale;
+        ctx.shadowOffsetX = 2/scale;
+        ctx.shadowOffsetY = 2/scale;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.beginPath();
+        ctx.roundRect(
+          midX - width/2, 
+          boxY,
+          width, 
+          height, 
+          6/scale
+        );
+        ctx.fill();
 
-        // Draw label text
-        ctx.fillStyle = 'blue';
+        // Reset shadow for text
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        // Draw label text with proper vertical centering
+        ctx.fillStyle = '#1976D2';
         ctx.textAlign = 'center';
-        ctx.fillText(label, midX, midY - height/2 - 5/scale);
-        ctx.fillText(value, midX, midY - 10/scale);
+        ctx.textBaseline = 'middle';
+
+        // Calculate vertical positions for centered text
+        const labelY = boxY + height * 0.3;
+        const valueY = boxY + height * 0.7;
+
+        // Draw the text
+        ctx.fillText(label, midX, labelY);
+        ctx.fillStyle = '#2196F3';
+        ctx.fillText(value, midX, valueY);
       }
     });
 
