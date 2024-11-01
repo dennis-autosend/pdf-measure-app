@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import ScaleSettings from './ScaleSettings';
 import MeasurementTools from './MeasurementTools';
 import { FaCloudUploadAlt } from 'react-icons/fa';
+import Instructions from './Instructions';
 
 const ImageViewer = () => {
   const [image, setImage] = useState(null);
@@ -533,6 +534,7 @@ const ImageViewer = () => {
           <h2>Landscape Measurement Tool</h2>
         </div>
         <div className="sidebar-content">
+          <Instructions />
           <div className="file-input">
             <label htmlFor="file-upload" className="custom-file-upload">
               <FaCloudUploadAlt /> Choose Image
